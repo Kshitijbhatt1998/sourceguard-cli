@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sourceguard"
+version = "0.1.0"
+description = "Secret detection CLI for developers — catch hardcoded keys before they leak."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["security", "secrets", "cli", "devsecops", "git"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = [
+    "click>=8.0",
+]
+
+[project.scripts]
+sourceguard = "sourceguard.cli:cli"
+
+[project.urls]
+Homepage   = "https://github.com/Kshitijbhatt1998/sourceguard"
+Repository = "https://github.com/Kshitijbhatt1998/sourceguard"
+Issues     = "https://github.com/Kshitijbhatt1998/sourceguard/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sourceguard*"]
