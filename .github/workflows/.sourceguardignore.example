@@ -1,0 +1,5 @@
+# .sourceguardignore — copy to .sourceguardignore in your project root
+tests/fixtures/*
+vendor/*
+dist/*
+build/*

@@ -4,7 +4,6 @@ SourceGuard CLI entry point.
 Usage:
     sourceguard scan <path> [--json] [--no-entropy] [--severity LEVEL]
 """
-
 import sys
 import click
 from .scanner import scan
@@ -28,6 +27,23 @@ def cli():
     help="Only report findings at or above this severity.",
     show_default=True,
 )
+@cli.command("scan")
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--json","as_json",is_flag=True,help="Output as JSON.")
+@click.option("--no-entropy","no_entropy",is_flag=True,help="Disable entropy detection.")
+@click.option("--severity","min_severity",default="LOW",
+    type=click.Choice(["LOW","MEDIUM","HIGH","CRITICAL"],case_sensitive=False),
+    show_default=True, help="Minimum severity to report.")
+def scan_cmd(path, as_json, no_entropy, min_severity):
+    """Scan PATH for hardcoded secrets."""
+    result = scan(path, include_entropy=not no_entropy)
+    cutoff = SEVERITY_ORDER[min_severity.upper()]
+    result.findings = [f for f in result.findings if SEVERITY_ORDER.get(f.severity,9) <= cutoff]
+    if as_json: print_json(result)
+    else: print_results(result, path)
+    sys.exit(1 if not result.clean else 0)
+
+
 def scan_cmd(path: str, as_json: bool, no_entropy: bool, min_severity: str):
     """Scan PATH for hardcoded secrets. Defaults to current directory."""
     result = scan(path, include_entropy=not no_entropy)

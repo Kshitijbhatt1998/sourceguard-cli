@@ -26,35 +26,16 @@ def _charset_ratio(s: str, charset: str) -> float:
     return sum(1 for c in s if c in charset) / len(s)
 
 
-def high_entropy_strings(line: str) -> list[dict]:
-    """
-    Extract all quoted or unquoted tokens from a line and return those
-    that look like secrets based on entropy + charset analysis.
-
-    Returns list of dicts: {token, entropy, start, end}
-    """
+def high_entropy_strings(line):
     hits = []
-    # Match quoted strings and long unquoted tokens
-    for m in re.finditer(r"['\"]([A-Za-z0-9+/=_\-]{%d,%d})['\"]|(?<![.\w])([A-Za-z0-9+/=_\-]{%d,%d})(?![.\w])"
-                         % (MIN_LENGTH, MAX_LENGTH, MIN_LENGTH, MAX_LENGTH), line):
+    pat = re.compile(r"""['"]([A-Za-z0-9+/=_\-]{%d,%d})['"]|(?<![.\w])([A-Za-z0-9+/=_\-]{%d,%d})(?![.\w])""" % (MIN_LENGTH,MAX_LENGTH,MIN_LENGTH,MAX_LENGTH))
+    for m in pat.finditer(line):
         token = m.group(1) or m.group(2)
-        if not token:
-            continue
-
-        b64_ratio = _charset_ratio(token, _B64)
-        hex_ratio = _charset_ratio(token, _HEX)
-
-        # Only consider tokens that look like base64 or hex
-        if b64_ratio < 0.6 and hex_ratio < 0.8:
-            continue
-
-        entropy = _shannon(token)
-        if entropy >= ENTROPY_THRESHOLD:
-            hits.append({
-                "token":   token,
-                "entropy": round(entropy, 2),
-                "start":   m.start(),
-                "end":     m.end(),
-            })
-
+        if not token: continue
+        b64r = sum(1 for c in token if c in _B64)/len(token)
+        hexr = sum(1 for c in token if c in _HEX)/len(token)
+        if b64r < 0.6 and hexr < 0.8: continue
+        e = _shannon(token)
+        if e >= ENTROPY_THRESHOLD:
+            hits.append({"token": token, "entropy": round(e,2), "start": m.start(), "end": m.end()})
     return hits

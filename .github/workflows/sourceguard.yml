@@ -8,18 +8,11 @@ on:
 
 jobs:
   scan:
-    name: Scan for secrets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Install SourceGuard
-        run: pip install sourceguard
-
-      - name: Run scan
-        run: sourceguard scan . --severity HIGH
-        # Exits 1 if any HIGH or CRITICAL secrets found → blocks merge
+      - run: pip install sourceguard
+      - run: sourceguard scan . --severity HIGH # Exits 1 if any HIGH or CRITICAL secrets found → blocks merge
