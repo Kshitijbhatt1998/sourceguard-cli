@@ -1,0 +1,37 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\Kshit\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Project ideas\sourceguard-cle\sourceguard-cli
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-1.3.0, mock-3.15.1, respx-0.22.0, typeguard-4.1.5
+asyncio: mode=strict, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 9 items
+
+tests/test_scanner.py::test_aws_key_detected PASSED                      [ 11%]
+tests/test_scanner.py::test_stripe_key_detected PASSED                   [ 22%]
+tests/test_scanner.py::test_github_token_detected FAILED                 [ 33%]
+tests/test_scanner.py::test_database_url_detected PASSED                 [ 44%]
+tests/test_scanner.py::test_clean_file PASSED                            [ 55%]
+tests/test_scanner.py::test_high_entropy_flagged PASSED                  [ 66%]
+tests/test_scanner.py::test_low_entropy_ignored PASSED                   [ 77%]
+tests/test_scanner.py::test_ignored_file_skipped PASSED                  [ 88%]
+tests/test_scanner.py::test_severity_filter PASSED                       [100%]
+
+================================== FAILURES ===================================
+_________________________ test_github_token_detected __________________________
+
+tmp_path = WindowsPath('C:/Users/Kshit/AppData/Local/Temp/pytest-of-Kshit/pytest-7/test_github_token_detected0')
+
+    def test_github_token_detected(tmp_path):
+        write_tmp(tmp_path, "ci.py", """
+            token = "ghp_EXAMPLE_TOKEN_DUMMY_STRING_36_CHARS_X"
+        """)
+        result = scan(str(tmp_path))
+>       assert any(f.rule_id == "GITHUB_TOKEN" for f in result.findings)
+E       assert False
+E        +  where False = any(<generator object test_github_token_detected.<locals>.<genexpr> at 0x0000015F9B89D460>)
+
+tests\test_scanner.py:40: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_scanner.py::test_github_token_detected - assert False
+========================= 1 failed, 8 passed in 0.35s =========================
