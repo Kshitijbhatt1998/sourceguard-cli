@@ -20,6 +20,16 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.0",
+    "fastapi",
+    "sqlmodel",
+    "pydantic-settings",
+    "slowapi",
+    "uvicorn",
+    "psycopg2-binary",
+    "python-jose",
+    "passlib[bcrypt]",
+    "requests",
+    "python-dotenv",
 ]
 
 [project.scripts]
