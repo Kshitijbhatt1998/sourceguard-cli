@@ -1,53 +1,37 @@
-"""
-SourceGuard CLI entry point.
-
-Usage:
-    sourceguard scan <path> [--json] [--no-entropy] [--severity LEVEL]
-"""
 import sys
+import time
 import click
-from .scanner import scan
-from .output import print_results, print_json, SEVERITY_ORDER
-
+from .core.orchestrator import run_scan
+from .output import print_results, print_json, SEVERITY_ORDER, generate_html_report
 
 @click.group()
 @click.version_option(package_name="sourceguard", prog_name="sourceguard")
 def cli():
     """SourceGuard — secret detection for developers."""
-
+    pass
 
 @cli.command()
 @click.argument("path", default=".", type=click.Path(exists=True))
-@click.option("--json",       "as_json",     is_flag=True, help="Output results as JSON.")
-@click.option("--no-entropy", "no_entropy",  is_flag=True, help="Disable entropy-based detection.")
-@click.option(
-    "--severity", "min_severity",
-    default="LOW",
-    type=click.Choice(["LOW", "MEDIUM", "HIGH", "CRITICAL"], case_sensitive=False),
-    help="Only report findings at or above this severity.",
-    show_default=True,
-)
-@cli.command("scan")
-@click.argument("path", default=".", type=click.Path(exists=True))
-@click.option("--json","as_json",is_flag=True,help="Output as JSON.")
-@click.option("--no-entropy","no_entropy",is_flag=True,help="Disable entropy detection.")
-@click.option("--severity","min_severity",default="LOW",
-    type=click.Choice(["LOW","MEDIUM","HIGH","CRITICAL"],case_sensitive=False),
-    show_default=True, help="Minimum severity to report.")
-def scan_cmd(path, as_json, no_entropy, min_severity):
+@click.option("--json", "as_json", is_flag=True, help="Output results as JSON.")
+@click.option("--severity", "min_severity", default="LOW",
+              type=click.Choice(["LOW", "MEDIUM", "HIGH", "CRITICAL"], case_sensitive=False),
+              show_default=True, help="Minimum severity to report.")
+@click.option("--watch", is_flag=True, help="Watch for file changes in real-time.")
+@click.option("--report", "report_path", type=click.Path(), help="Generate an HTML report at the given path.")
+def scan(path, as_json, min_severity, watch, report_path):
     """Scan PATH for hardcoded secrets."""
-    result = scan(path, include_entropy=not no_entropy)
-    cutoff = SEVERITY_ORDER[min_severity.upper()]
-    result.findings = [f for f in result.findings if SEVERITY_ORDER.get(f.severity,9) <= cutoff]
-    if as_json: print_json(result)
-    else: print_results(result, path)
-    sys.exit(1 if not result.clean else 0)
+    if watch:
+        click.echo(f"Watching {path} for changes... (Real-time mode skeleton active)")
+        # Real-time watching logic would go here
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            click.echo("Stopped watching.")
+            sys.exit(0)
 
-
-def scan_cmd(path: str, as_json: bool, no_entropy: bool, min_severity: str):
-    """Scan PATH for hardcoded secrets. Defaults to current directory."""
-    result = scan(path, include_entropy=not no_entropy)
-
+    result = run_scan(path)
+    
     # Filter by severity
     cutoff = SEVERITY_ORDER[min_severity.upper()]
     result.findings = [
@@ -57,11 +41,37 @@ def scan_cmd(path: str, as_json: bool, no_entropy: bool, min_severity: str):
 
     if as_json:
         print_json(result)
+    elif report_path:
+        generate_html_report(result, report_path)
     else:
-        print_results(result, path)
+        print_results(result)
 
-    sys.exit(1 if not result.clean else 0)
+    sys.exit(1 if not result.is_clean else 0)
 
+@cli.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def fix(path):
+    """Automatically suggestive fixes for detected secrets (interactive)."""
+    click.echo(f"Scanning {path} for autofixable secrets...")
+    result = run_scan(path)
+    if result.is_clean:
+        click.echo("Nothing to fix!")
+        return
+        
+    for finding in result.findings:
+        click.echo(f"\nFinding: {finding.rule_name} in {finding.file}:{finding.line_number}")
+        click.echo(f"Suggestion: {finding.fix_suggestion}")
+        if click.confirm("Do you want to apply a masked placeholder?"):
+            click.echo("Applied masked placeholder (Skeleton).")
+            
+@cli.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--output", "-o", default="report.html", help="Output file path.")
+def report(path, output):
+    """Generate a detailed HTML report of findings."""
+    click.echo(f"Generating report for {path}...")
+    result = run_scan(path)
+    generate_html_report(result, output)
 
-# Allow `sourceguard scan` and also bare `sourceguard <path>`
-cli.add_command(scan_cmd, name="scan")
+if __name__ == "__main__":
+    cli()
