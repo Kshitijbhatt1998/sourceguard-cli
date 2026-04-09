@@ -84,11 +84,12 @@ class Finding(SQLModel, table=True):
     file_path: str
     line_number: int
 
-    match_masked: str 
-    hash: str = Field(index=True) 
+    match_masked: str
+    hash: str = Field(index=True)
 
     message: str
     suggestion: str
+    entropy: Optional[float] = None
 
     is_resolved: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)

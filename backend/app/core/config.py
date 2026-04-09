@@ -1,4 +1,3 @@
-import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -7,6 +6,7 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "x-api-key"
     RATE_LIMIT: str = "10/minute"
     SECRET_KEY: str
+    GITHUB_WEBHOOK_SECRET: str = ""
 
     class Config:
         env_file = ".env"
